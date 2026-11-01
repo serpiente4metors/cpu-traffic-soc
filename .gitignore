@@ -1,0 +1,37 @@
+# ---------------- PDS 过程文件（可由 scripts/pds_run.bat 重建） ----------------
+pg200h/compile/
+pg200h/synthesize/
+pg200h/device_map/
+pg200h/place_route/
+pg200h/report_timing/
+pg200h/report_power/
+pg200h/generate_netlist/
+pg200h/constraint_check/
+pg200h/temp_projects/
+pg200h/logbackup/
+pg200h/**/bak/
+*.log
+*.lock
+pg200h/stderr.log
+pg200h/stdout.log
+
+# ---------------- 比特流（体积大，走 GitHub Release 附件） ----------------
+pg200h/generate_bitstream/*.sbit
+pg200h/generate_bitstream/*.smsk
+pg200h/generate_bitstream/*.bgr
+pg200h/generate_bitstream/*.db
+
+# ---------------- 主机端运行产物 ----------------
+host_demo/output/
+host_demo/frame_lines/
+host_demo/frame_chunks/
+host_demo/**/*.pyc
+__pycache__/
+.venv/
+
+# ---------------- 编辑器 / 系统 ----------------
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

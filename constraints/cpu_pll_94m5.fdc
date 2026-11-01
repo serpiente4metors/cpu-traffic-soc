@@ -1,0 +1,104 @@
+# ============================================================
+# cpu_pll_94m5.fdc —— 时钟 + 引脚约束（配 94.5 MHz 的 PLL）
+#
+# 【这条约束只写一个时钟：输入脚的 27 MHz。这是【真话】，永远不要改】
+#   输入脚 clk = 27 MHz（37.037037 ns）← 板上晶振真实频率
+#   CPU 时钟由 PLL IP 产生，PDS 从 IP 参数自动推导：
+#     pll_94_5 : CLKIN 27 / RATIOI 2 × RATIOM 7 = 94.5 MHz（10.582011 ns）
+#     历史版本 : pll_81m  : 27 / 1 × 3          = 81 MHz  （12.345679 ns）
+#
+# ⚠ PLL 的频率网格只有 27 × M / N（N 实际只能取 1 或 2），所以可选档位是
+#     27 / 40.5 / 54 / 67.5 / 81 / 94.5 / 108 / 121.5 / 135 MHz
+#   94.5 和 108 之间【没有中间档】—— 试过 99.9、102.6 都不可达。
+#   108 MHz 实测差 0.33 ns（最好 104.34 MHz），要过必须改流水线结构。
+#
+# ⚠ 绝不能把输入脚写成 CPU 的周期（比如 10.582）：工具会顺着 PLL 的
+#   ×3.5 关系再乘一次，推出 3 ns 的假周期 —— 报告一片绿灯，上板必挂。
+#   （早年 cpu_81mhz_whatif.fdc 就是干这个的，只用于"逼工具按目标频率
+#    优化"的实验，绝不能用在实际构建上。）
+#
+# ⚠ 换 PLL 频率后必须核对 report_timing 的 Clock Summary：
+#     sys_clk|...CLKOUT0_Inferred 的 Period 必须等于 CPU 真实周期。
+#     94.5 MHz → 10.5820；如果这里显示的还是 12.3450，说明 PDS 没从 IP
+#     推对，把下面那行 create_generated_clock 打开（-multiply_by 3.5）
+#     并核对 net 名（顶层是 top_fpga，所以 net 直接是 clk_cpu）。
+# ============================================================
+
+## ---- 输入时钟：27 MHz 晶振（D18），真话 ----
+create_clock -name {sys_clk} [get_ports {clk}] -period {37.037037} -waveform {0 18.518518}
+
+## ---- CPU 时钟（PLL 输出，94.5 MHz）----
+## 正常情况下 PDS 从 IP 自动推导，下面两行保持注释即可。
+## 只有在 Clock Summary 里看到 inferred 周期不是 10.5820 时，才把这两行
+## 打开（去掉行首的 ## ）：
+##     -multiply_by 写 3.5（27 × 3.5 = 94.5 MHz）
+##     net 名：顶层模块就是 top_fpga，所以是 clk_cpu
+## create_generated_clock -name {cpu_clk} -source [get_ports {clk}] \
+##     -multiply_by 3.5 [get_nets {clk_cpu}]
+
+## ============================================================
+## 引脚约束（与原 cpu.fdc 完全一致）
+## ============================================================
+
+## ---- clk : D18 ----
+define_attribute {p:clk} {PAP_IO_DIRECTION} {INPUT}
+define_attribute {p:clk} {PAP_IO_LOC} {D18}
+define_attribute {p:clk} {PAP_IO_VCCIO} {3.3}
+define_attribute {p:clk} {PAP_IO_STANDARD} {LVCMOS33}
+define_attribute {p:clk} {PAP_IO_NONE} {TRUE}
+
+## ---- rst_n : C22 ----
+define_attribute {p:rst_n} {PAP_IO_DIRECTION} {INPUT}
+define_attribute {p:rst_n} {PAP_IO_LOC} {C22}
+define_attribute {p:rst_n} {PAP_IO_VCCIO} {3.3}
+define_attribute {p:rst_n} {PAP_IO_STANDARD} {LVCMOS33}
+define_attribute {p:rst_n} {PAP_IO_NONE} {TRUE}
+
+## ---- uart_rx : AC26 ----
+define_attribute {p:uart_rx} {PAP_IO_DIRECTION} {INPUT}
+define_attribute {p:uart_rx} {PAP_IO_LOC} {AC26}
+define_attribute {p:uart_rx} {PAP_IO_VCCIO} {3.3}
+define_attribute {p:uart_rx} {PAP_IO_STANDARD} {LVCMOS33}
+define_attribute {p:uart_rx} {PAP_IO_NONE} {TRUE}
+
+## ---- uart_tx : AB26 ----
+define_attribute {p:uart_tx} {PAP_IO_DIRECTION} {OUTPUT}
+define_attribute {p:uart_tx} {PAP_IO_LOC} {AB26}
+define_attribute {p:uart_tx} {PAP_IO_VCCIO} {3.3}
+define_attribute {p:uart_tx} {PAP_IO_STANDARD} {LVCMOS33}
+define_attribute {p:uart_tx} {PAP_IO_DRIVE} {8}
+define_attribute {p:uart_tx} {PAP_IO_NONE} {TRUE}
+define_attribute {p:uart_tx} {PAP_IO_SLEW} {SLOW}
+
+## ---- gpio_out[3:0] = LED[3:0] ----
+define_attribute {p:gpio_out[0]} {PAP_IO_DIRECTION} {OUTPUT}
+define_attribute {p:gpio_out[0]} {PAP_IO_LOC} {U16}
+define_attribute {p:gpio_out[0]} {PAP_IO_VCCIO} {3.3}
+define_attribute {p:gpio_out[0]} {PAP_IO_STANDARD} {LVCMOS33}
+define_attribute {p:gpio_out[0]} {PAP_IO_DRIVE} {8}
+define_attribute {p:gpio_out[0]} {PAP_IO_NONE} {TRUE}
+define_attribute {p:gpio_out[0]} {PAP_IO_SLEW} {SLOW}
+
+define_attribute {p:gpio_out[1]} {PAP_IO_DIRECTION} {OUTPUT}
+define_attribute {p:gpio_out[1]} {PAP_IO_LOC} {U15}
+define_attribute {p:gpio_out[1]} {PAP_IO_VCCIO} {3.3}
+define_attribute {p:gpio_out[1]} {PAP_IO_STANDARD} {LVCMOS33}
+define_attribute {p:gpio_out[1]} {PAP_IO_DRIVE} {8}
+define_attribute {p:gpio_out[1]} {PAP_IO_NONE} {TRUE}
+define_attribute {p:gpio_out[1]} {PAP_IO_SLEW} {SLOW}
+
+define_attribute {p:gpio_out[2]} {PAP_IO_DIRECTION} {OUTPUT}
+define_attribute {p:gpio_out[2]} {PAP_IO_LOC} {V17}
+define_attribute {p:gpio_out[2]} {PAP_IO_VCCIO} {3.3}
+define_attribute {p:gpio_out[2]} {PAP_IO_STANDARD} {LVCMOS33}
+define_attribute {p:gpio_out[2]} {PAP_IO_DRIVE} {8}
+define_attribute {p:gpio_out[2]} {PAP_IO_NONE} {TRUE}
+define_attribute {p:gpio_out[2]} {PAP_IO_SLEW} {SLOW}
+
+define_attribute {p:gpio_out[3]} {PAP_IO_DIRECTION} {OUTPUT}
+define_attribute {p:gpio_out[3]} {PAP_IO_LOC} {V16}
+define_attribute {p:gpio_out[3]} {PAP_IO_VCCIO} {3.3}
+define_attribute {p:gpio_out[3]} {PAP_IO_STANDARD} {LVCMOS33}
+define_attribute {p:gpio_out[3]} {PAP_IO_DRIVE} {8}
+define_attribute {p:gpio_out[3]} {PAP_IO_NONE} {TRUE}
+define_attribute {p:gpio_out[3]} {PAP_IO_SLEW} {SLOW}

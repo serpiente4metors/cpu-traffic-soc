@@ -1,0 +1,7 @@
+﻿number,class_id,code,chinese,input_32x32,preview,frame_crc,exact_int8_roundtrip
+01,0,pn,禁止停车,host_demo/samples/demo_candidates/inputs/01_pn_32x32.png,host_demo/samples/demo_candidates/previews/01_pn_preview.png,c213,yes
+02,1,pne,禁止驶入,host_demo/samples/demo_candidates/inputs/02_pne_32x32.png,host_demo/samples/demo_candidates/previews/02_pne_preview.png,9a7b,yes
+03,2,i5,靠右侧道路行驶,host_demo/samples/demo_candidates/inputs/03_i5_32x32.png,host_demo/samples/demo_candidates/previews/03_i5_preview.png,c724,yes
+04,4,pl40,限速40,host_demo/samples/demo_candidates/inputs/04_pl40_32x32.png,host_demo/samples/demo_candidates/previews/04_pl40_preview.png,5a55,yes
+05,6,pl50,限速50,host_demo/samples/demo_candidates/inputs/05_pl50_32x32.png,host_demo/samples/demo_candidates/previews/05_pl50_preview.png,8dea,yes
+06,8,pl80,限速80,host_demo/samples/demo_candidates/inputs/06_pl80_32x32.png,host_demo/samples/demo_candidates/previews/06_pl80_preview.png,abe2,yes
