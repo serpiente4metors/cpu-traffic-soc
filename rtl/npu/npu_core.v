@@ -206,7 +206,6 @@ module npu_core #(
             wgt_idx_q   <= 16'd0;
             tap_go_q    <= 1'b0;
         end else begin
-// S21：地址/valid/权重索引整体打一拍
             act_addr_q  <= act_addr;
             act_valid_q <= act_valid;
             wgt_idx_q   <= wgt_idx;
@@ -346,7 +345,7 @@ module npu_core #(
 
                 ST_MAC: begin
                     if (mac_cnt <= 16'd1) begin
-                        mac_cnt <= 16'd4;        // S21：地址/valid 打一拍后，MACEND 等 4 拍
+                        mac_cnt <= 16'd4;
                         st      <= ST_MACEND;
                     end else begin
                         mac_cnt <= mac_cnt - 16'd1;

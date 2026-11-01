@@ -16,7 +16,7 @@ module csr (
     input  wire [31:0] wdata,
 
 // ---- 退休计数 ----
-    input  wire [1:0]  retire,   // S5：一拍最多退休 2 条（双发）
+    input  wire [1:0]  retire,
 
 // ---- 陷阱 / 返回（WB 拍）----
     input  wire        trap_en,

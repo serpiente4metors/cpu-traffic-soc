@@ -34,7 +34,6 @@ module top #(
     output wire [31:0] dbg_cycle,
     output wire [31:0] dbg_mcause,
     output wire [31:0] dbg_mepc,
-// ---- S5：lane1 观测口（保留配对指令及其写回信息）----
     output wire [31:0] dbg_pc1,
     output wire        dbg_we1,
     output wire [ 4:0] dbg_rd1,
@@ -44,17 +43,17 @@ module top #(
 
     reg         if2_valid_q;          // IF2
     reg  [31:0] if2_pc_q, if2_instr_q;
-    reg         if2_ptk_q;            // S4：取这条指令时给的预测（方向/目标）
+    reg         if2_ptk_q;
     reg  [31:0] if2_ptgt_q;
-    reg  [31:0] if2_instr1_q;         // S5：同一取指组里的第二条（lane1）
-    reg         if2_pair_q;           // S5：这一组是"成对交付"的
+    reg  [31:0] if2_instr1_q;
+    reg         if2_pair_q;
 
     reg         id_valid_q;           // ID
     reg  [31:0] id_pc_q, id_instr_q;
     reg         id_ptk_q;
     reg  [31:0] id_ptgt_q;
-    reg  [31:0] id_instr1_q;          // S5：lane1 的指令字
-    reg         id_pair_q;            // S5：ID 看到的是成对指令
+    reg  [31:0] id_instr1_q;
+    reg         id_pair_q;
 
 // ID -> E1
     reg         e_valid_q;
@@ -171,7 +170,6 @@ module top #(
 
     wire [31:0] ic_mem_addr;          // I-Cache 送主存的读地址（必须显式声明 32 位）
 
-// S11：本拍 D 口归谁用（lane0 或 lane1，一对里最多一条访存）。
 //   这几个必须在 MMIO 段之前声明好，赋值在下面的 E2 段。
     wire        e2_mem1;
     wire [ 7:0] e2_wmask1;
@@ -568,7 +566,7 @@ module top #(
     wire [4:0] id_rd_1  = id_instr1_q[11:7];
 
     wire [31:0] rf_rdata1, rf_rdata2;
-    wire [31:0] rf_rdata1_1, rf_rdata2_1;      // S5：lane1 的两个读口
+    wire [31:0] rf_rdata1_1, rf_rdata2_1;
 
     regfile u_rf (
         .clk    (clk),
@@ -610,7 +608,7 @@ module top #(
 
     wire        csr_wen = wb_valid_q && wb_csr_wen_q && !wb_exc_q;
     wire [1:0]  retire;
-    assign retire = {wb_valid1_q, wb_valid_q};   // S5：一拍最多退休两条
+    assign retire = {wb_valid1_q, wb_valid_q};
 
     csr u_csr (
         .clk         (clk),
@@ -663,10 +661,8 @@ module top #(
 
     wire        wb_fwd_ok  = wb_we_q && (wb_rd_q != 5'd0);
 
-// S5：lane1 的旁路源（同一级里 lane1 比 lane0 新）
     wire        e2_fwd1_ok = e2_valid1_q && e2_we1_q && (e2_rd1_q != 5'd0) && !e2_load1_q;
     wire        m_fwd1_ok  = m_valid1_q  && m_we1_q  && (m_rd1_q  != 5'd0);
-// S11：lane1 也可能是 load，数据从 m_load_aligned 来
     wire [31:0] m_fwd1_val = m_load1_q ? (m_mmio_q ? m_mmio_rdata_q : m_load_aligned)
                                        : m_val1_q;
     wire        wb_fwd1_ok = wb_we1_q    && (wb_rd1_q != 5'd0);
@@ -873,7 +869,6 @@ module top #(
     wire [7:0] e2_wmask = (e2_size_q == 2'b00) ? 8'h01 :
                           (e2_size_q == 2'b01) ? 8'h03 : 8'h0F;
 
-// S11：lane1 也可能占 D 口（一对里最多一条访存）
     assign e2_wmask1 = (e2_size1_q == 2'b00) ? 8'h01 :
                        (e2_size1_q == 2'b01) ? 8'h03 : 8'h0F;
     assign e2_mem1   = e2_valid1_q && (e2_load1_q || e2_store1_q);
@@ -950,7 +945,6 @@ module top #(
                e_we_q && (e_rd_q != 5'd0) &&
                ((id_rs1_1 == e_rd_q) || (id_rs2_1 == e_rd_q));
 
-// S11：lane1 也可能是 load（它的消费者在"下一批"取指里，此刻在 ID）
     wire lu1a = id_valid_q && e_valid1_q && e_load1_q &&
                 e_we1_q && (e_rd_1_q != 5'd0) &&
                 ((id_rs1 == e_rd_1_q) || (id_rs2 == e_rd_1_q));
@@ -1025,7 +1019,6 @@ module top #(
             wb_is_csr_q <= 1'b0; wb_csr_wen_q <= 1'b0;
             wb_csr_addr_q <= 12'd0; wb_csr_wdata_q <= 32'd0; wb_mret_q <= 1'b0;
 
-// ---- S5：lane1 ----
             e_valid1_q <= 1'b0; e_alu1_q <= 4'd0; e_imm1_q <= 32'd0;
             e_apc1_q <= 1'b0; e_bimm1_q <= 1'b0;
             e_rs1_1_q <= 5'd0; e_rs2_1_q <= 5'd0; e_rd_1_q <= 5'd0;
@@ -1038,7 +1031,6 @@ module top #(
             m_we1_q <= 1'b0; m_instr1_q <= 32'd0;
             wb_valid1_q <= 1'b0; wb_val1_q <= 32'd0; wb_rd1_q <= 5'd0;
             wb_we1_q <= 1'b0; wb_instr1_q <= 32'd0;
-// S11：lane1 访存寄存器复位
             e_load1_q <= 1'b0; e_store1_q <= 1'b0; e_uns1_q <= 1'b0; e_size1_q <= 2'b10;
             e2_load1_q <= 1'b0; e2_store1_q <= 1'b0; e2_uns1_q <= 1'b0; e2_size1_q <= 2'b10;
             e2_addr1_q <= 32'd0; e2_stdata1_q <= 32'd0;
@@ -1052,7 +1044,7 @@ module top #(
             m_valid_q    <= 1'b0;
             wb_valid_q   <= 1'b0;
             wb_we_q      <= 1'b0;
-            e_valid1_q   <= 1'b0;      // S5：lane1 一起丢
+            e_valid1_q   <= 1'b0;
             e2_valid1_q  <= 1'b0;
             m_valid1_q   <= 1'b0;
             wb_valid1_q  <= 1'b0;
@@ -1060,7 +1052,7 @@ module top #(
 
         end else if (div_stall) begin
             wb_we_q <= 1'b0;
-            wb_we1_q <= 1'b0;   // S5：lane1 同理，否则 32 拍冻结会重复写同一寄存器
+            wb_we1_q <= 1'b0;
 
         end else begin
 // ---------------- 后端：无条件推进 ----------------
@@ -1078,7 +1070,6 @@ module top #(
             e2_store_q    <= e_store_q;
             e2_uns_q      <= e_uns_q;
             e2_size_q     <= e_size_q;
-// S11：lane1 的访存信息一起推进
             e2_addr1_q    <= alu_y1;
             e2_stdata1_q  <= fwd_b1;
             e2_load1_q    <= e_load1_q  && e_valid1_q;
@@ -1125,7 +1116,6 @@ module top #(
             m_mmio_q      <= e2_mmio_hit;
             m_mmio_rdata_q<= mmio_rdata_w;
 
-// ---- S5：lane1 影子通路 ----
             e2_valid1_q   <= redirect ? 1'b0 : e_valid1_q;   // 和 lane0 一样被 redirect 冲掉
             e2_val1_q     <= alu_y1;
             e2_rd1_q      <= e_rd_1_q;
@@ -1140,7 +1130,6 @@ module top #(
             m_rd1_q       <= e2_rd1_q;
             m_we1_q       <= e2_we1_q;
             m_instr1_q    <= e2_instr1_q;
-// S11：lane1 的访存信息进 M 级（对齐器要用）
             m_load1_q     <= e2_load1_q;
             m_uns1_q      <= e2_uns1_q;
             m_size1_q     <= e2_size1_q;
@@ -1152,7 +1141,6 @@ module top #(
 // 这里再排除一次更稳妥。
             wb_we1_q      <= m_valid1_q && m_we1_q && !m_exc_q;   // store 的 we1 在 ctrl_unit 里已是 0
             wb_rd1_q      <= m_rd1_q;
-// S11：lane1 若是 load，写回的是存储器数据而不是 ALU 结果
             wb_val1_q     <= m_load1_q
                            ? (m_mmio_q ? m_mmio_rdata_q : m_load_aligned)
                            : m_val1_q;
@@ -1226,7 +1214,6 @@ module top #(
                 e_store_q   <= d_store;
                 e_size_q    <= d_size;
                 e_uns_q     <= d_uns;
-// S11：lane1 的访存标志也进 E1（store 不写寄存器，we1 由 ctrl_unit 给 0）
                 e_load1_q   <= d_load1;
                 e_store1_q  <= d_store1;
                 e_size1_q   <= d_size1;
@@ -1242,7 +1229,6 @@ module top #(
                 e_is_ebreak_q<= d_is_ebreak;
                 e_is_mret_q <= d_is_mret;
 
-// ---- S5：lane1 进 E1（只有成对时有效）----
                 e_valid1_q  <= id_valid_q && id_pair_q;
                 e_alu1_q    <= d_alu_op1;
                 e_imm1_q    <= d_imm1;
@@ -1266,7 +1252,6 @@ module top #(
     assign dbg_mcause = csr_mcause;
     assign dbg_mepc   = csr_mepc;
 
-// S5：lane1 —— 成对时它的 PC 恒等于 lane0 的 PC + 4
     assign dbg_pc1    = wb_pc_q + 32'd4;
     assign dbg_we1    = rf_we1 && (wb_rd1_q != 5'd0);
     assign dbg_rd1    = wb_rd1_q;
