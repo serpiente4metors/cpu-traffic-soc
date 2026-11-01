@@ -7,7 +7,7 @@ RTL、固件、约束或比特流。模型推理发生在 FPGA 内，Python 不�
 
 1. 在线上 FPGA 平台加载：
 
-   `../333/generate_bitstream/top_fpga_s21_start7s_verbose_94p5.sbit`
+   `../pg200h/generate_bitstream/top_fpga.sbit`
 
 2. 打开串口终端，参数为 `115200 8N1`。
 3. 在串口终端输入 `start` 并回车。

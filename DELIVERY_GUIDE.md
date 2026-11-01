@@ -5,7 +5,7 @@ PDS 工程和比特流保持原样；后来新增的主机端演示工具集中�
 
 ## 最终演示入口
 
-1. 在 FPGA 平台加载 `pg200h/generate_bitstream/top_fpga_s21_start7s_verbose_94p5.sbit`。
+1. 在 FPGA 平台加载 `pg200h/generate_bitstream/top_fpga.sbit`。
 2. 打开 115200 8N1 串口终端。
 3. 依次输入 `start` 和 `2`，等待 `READY`。
 4. 双击 `host_demo/START_HERE.bat`。
@@ -30,8 +30,8 @@ final soc/
 
 | 文件或目录 | 用途 |
 |---|---|
-| `pg200h/generate_bitstream/top_fpga_s21_start7s_verbose_94p5.sbit` | 最终 FPGA 比特流，现场演示使用 |
-| `pg200h/generate_bitstream/top_fpga_s21_start7s_verbose_94p5.smsk` | Pango 比特流配套文件，与 sbit 保留在同一目录 |
+| `pg200h/generate_bitstream/top_fpga.sbit` | 最终 FPGA 比特流，现场演示使用 |
+| `pg200h/generate_bitstream/top_fpga.smsk` | Pango 比特流配套文件，与 sbit 保留在同一目录 |
 | `pg200h/pg200h.pds` | Pango PDS 工程文件 |
 | `pg200h/ipcore/pll_94/` | 94.5 MHz PLL IP 和模板文件 |
 | `constraints/cpu_pll_94m5.fdc` | 27 MHz 输入时钟、94.5 MHz PLL 输出及板级管脚约束 |

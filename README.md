@@ -89,7 +89,7 @@ pg200h/                  PDS 工程（PLL IP + 工程文件 + 比特流）
 
 ## 快速开始
 
-**1. 烧录**：从 [Releases](../../releases) 下载 `top_fpga_s21_start7s_verbose_94p5.sbit`，
+**1. 烧录**：从 [Releases](../../releases) 下载 `top_fpga.sbit`，
 通过紫光同创 PDS / 在线平台下载到 PG2L200H。
 
 **2. 串口**：115200 8N1，接 RX/TX 后上电：
